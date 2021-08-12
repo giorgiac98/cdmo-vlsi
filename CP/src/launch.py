@@ -15,15 +15,25 @@ def plot(width, height, blocks):
     plt.show()
 
 # Load n-Queens model from file
-nqueens = Model("queens.mzn")
+nqueens = Model("vlsi.mzn")
 # Find the MiniZinc solver configuration for Gecode
 gecode = Solver.lookup("gecode")
 # Create an Instance of the n-Queens model for Gecode
 instance = Instance(gecode, nqueens)
 # Assign 4 to n
-instance["n"] = 4
-result = instance.solve()
-# Output the array q
-print(result["q"])
+instance["w"] = 9
+instance['c'] = 5
+instance['dx'] = [3, 2, 2, 3, 4]
+instance['dy'] = [3, 4, 8, 9, 12]
 
-plot(9, 12, [(3,3,4,0,'red'), (2,4,7,0,'blue'), (2,8,7,4,'green'), (3,9,4,3,'cyan'), (4,12,0,0,'pink')])
+result = instance.solve()
+# Output
+print(result)
+print(result["h"])
+print(result["x"])
+print(result["y"])
+
+colors = ['red', 'blue', 'green', 'cyan', 'pink']
+
+plot(9, result["h"], [(instance['dx'][i], instance['dy'][i], result["x"][i], result["y"][i], colors[i]) for i in range(0,5)])
+# [(3,3,4,0,'red'), (2,4,7,0,'blue'), (2,8,7,4,'green'), (3,9,4,3,'cyan'), (4,12,0,0,'pink')])
