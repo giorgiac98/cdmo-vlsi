@@ -14,7 +14,7 @@ array [1..c] of var int: y;
 
 constraint h >= 0;
 constraint forall (yo in y) (yo <= h /\ yo >= 0);
-constraint forall(i,j in index_set(x) where i < j)(
+constraint forall(i,j in index_set(y) where i < j)(
         x[i] + dx[i] <= x[j] \/ y[i] + dy[i] <= y[j] \/
         x[j] + dx[j] <= x[i] \/ y[j] + dy[j] <= y[i]
     );
