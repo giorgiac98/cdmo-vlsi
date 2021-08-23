@@ -2,6 +2,7 @@ from minizinc import Instance, Model, Solver
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
+
 def solve_model(w, c, dim):
     # Load the model from file
     model = Model("vlsi.mzn")
@@ -13,10 +14,11 @@ def solve_model(w, c, dim):
     instance["w"] = w
     instance['c'] = c
     instance['dx'] = [x[0] for x in dim]
-    instance['dy'] = [y[0] for y in dim]
+    instance['dy'] = [y[1] for y in dim]
 
     result = instance.solve()
     return instance, result
+
 
 def plot(width, height, blocks):
     colors = ['red', 'blue', 'green', 'cyan', 'pink', 'purple', 'brown', 'olive', 'grey', 'orange']
@@ -24,7 +26,7 @@ def plot(width, height, blocks):
     fig, ax = plt.subplots()
     for i in range(0, len(blocks)):
         w,h,x,y = blocks[i]
-        ax.add_patch(Rectangle((x,y), w, h, facecolor=colors[i], lw=1))
+        ax.add_patch(Rectangle((x,y), w, h, facecolor=colors[i], lw=1, alpha=0.75))
 
     ax.set_ylim(0, height)
     ax.set_xlim(0, width)
@@ -41,17 +43,21 @@ for i in range(1,41):
     lines = [l.strip('\n') for l in lines]
     dim = [l.split(' ') for l in lines[2:]]
     dim = [[int(d[0]), int(d[1])] for d in dim]
+
+    print(f'dim: {dim}')
     w = int(lines[0].strip('\n'))
     c = int(lines[1].strip('\n'))
 
     instance, result = solve_model(w, c, dim)
     # Output
     print(result)
-    print(result["h"])
-    print(result["x"])
-    print(result["y"])
+    out = f'{w} {result["l"]}\n{c}\n'
+    out += '\n'.join([f'{dim[i][0]} {dim[i][1]} '
+                      f'{result["origins"][i][0]} {result["origins"][i][1]}'
+                      for i in range(c)])
+    print('=====OUTPUT=====')
+    print(out)
 
     #with open(f'out/ins-{i}.txt') as f:
 
-
-    plot(w, result["h"], [(instance['dx'][i], instance['dy'][i], result["x"][i], result["y"][i]) for i in range(0,c)])
+    plot(w, result["l"], [(instance['dx'][i], instance['dy'][i], result["origins"][i][0], result["origins"][i][1]) for i in range(0,c)])
