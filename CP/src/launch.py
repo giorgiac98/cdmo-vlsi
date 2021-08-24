@@ -23,20 +23,22 @@ def solve_model(w, c, dim):
     return instance, result
 
 
-def plot(width, height, blocks):
+def plot(instance, width, height, blocks):
     colors = ['red', 'blue', 'green', 'cyan', 'pink', 'purple', 'brown', 'olive', 'grey', 'orange']
+    if len(blocks) <= len(colors):
+        fig, ax = plt.subplots()
+        for i in range(0, len(blocks)):
+            w,h,x,y = blocks[i]
+            ax.add_patch(Rectangle((x,y), w, h, facecolor=colors[i], lw=1, alpha=0.75))
 
-    fig, ax = plt.subplots()
-    for i in range(0, len(blocks)):
-        w,h,x,y = blocks[i]
-        ax.add_patch(Rectangle((x,y), w, h, facecolor=colors[i], lw=1, alpha=0.75))
-
-    ax.set_ylim(0, height)
-    ax.set_xlim(0, width)
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.grid(True)
-    plt.show()
+        ax.set_ylim(0, height)
+        ax.set_xlim(0, width)
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.grid(True)
+        plt.savefig(f'../out/fig-ins-{instance}.png')
+    else:
+        print('Not enough colors')
 
 
 for i in range(1,41):
@@ -56,7 +58,7 @@ for i in range(1,41):
     print(result)
     out = f'{w} {result["l"]}\n{c}\n'
     out += '\n'.join([f'{dim[i][0]} {dim[i][1]} '
-                      f'{result["origins"][i][0]} {result["origins"][i][1]}'
+                      f'{result["x"][i]} {result["y"][i]}'
                       for i in range(c)])
     print('=====OUTPUT=====')
     print(out)
@@ -64,4 +66,5 @@ for i in range(1,41):
     with open(f'../out/ins-{i}.txt', 'w') as f:
         f.write(out)
 
-    plot(w, result["l"], [(instance['dx'][i], instance['dy'][i], result["origins"][i][0], result["origins"][i][1]) for i in range(0,c)])
+    plot(i, w, result["l"], [(instance['dx'][i], instance['dy'][i],
+        result["x"][i], result["y"][i]) for i in range(0,c)])
