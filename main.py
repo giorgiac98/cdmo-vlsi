@@ -1,3 +1,4 @@
+import numpy as np
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
@@ -5,7 +6,7 @@ from SMT.src.launch import solve_SMT
 from CP.src.launch import solve_CP
 
 
-def plot(width, height, blocks, tech, i, show=False):
+def plot(width, height, blocks, tech, i, show=True):
     cmap = plt.cm.get_cmap('viridis', len(blocks))
     fig, ax = plt.subplots()
     for component, (w, h, x, y) in enumerate(blocks):
@@ -33,6 +34,7 @@ if __name__ == "__main__":
         solver = solve_SMT
     else:
         raise ValueError('Wrong technology, either CP or SMT')
+    print(f'SOLVING INSTANCES {args.start} - {args.end} USING {args.technology} MODEL')
     for i in range(args.start, args.end + 1):
         print('=' * 42)
         print(f'INSTANCE {i}')
@@ -41,10 +43,16 @@ if __name__ == "__main__":
         lines = [l.strip('\n') for l in lines]
         dim = [l.split(' ') for l in lines[2:]]
         x, y = list(zip(*map(lambda xy: (int(xy[0]), int(xy[1])), dim)))
+        xy = np.array([x, y]).T
+        areas = np.prod(xy, axis=1)
+        sorted_idx = np.argsort(areas)[::-1]
+        xy = xy[sorted_idx]
+        sorted_x = list(map(int, xy[:, 0]))
+        sorted_y = list(map(int, xy[:, 1]))
 
         instance = {"w": int(lines[0].strip('\n')),
                     'n': int(lines[1].strip('\n')),
-                    'x': x, 'y': y,
+                    'x': sorted_x, 'y': sorted_y,
                     'maxl': sum(y)}
         instance = solver(instance)
         if instance['solved']:

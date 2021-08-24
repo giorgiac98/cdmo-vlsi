@@ -1,28 +1,29 @@
 from minizinc import Instance, Model, Solver
 from minizinc.result import Status
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 from datetime import timedelta
 
 
-def solve_CP(input):
+def solve_CP(instance):
     # Load the model from file
     model = Model("CP/src/vlsi.mzn")
     # Find the MiniZinc solver configuration for Gecode
     gecode = Solver.lookup("gecode")
-    # Create an Instance of the model for Gecode
-    instance = Instance(gecode, model)
+    # Create a minizinc instance of the model for Gecode
+    mzn = Instance(gecode, model)
     # Assign 4 to n
-    instance["w"] = input['w']
-    instance['n'] = input['n']
-    instance['x'] = input['x']
-    instance['y'] = input['y']
-    instance['maxl'] = input['maxl']
+    mzn["w"] = instance['w']
+    mzn['n'] = instance['n']
+    mzn['x'] = instance['x']
+    mzn['y'] = instance['y']
+    mzn['maxl'] = instance['maxl']
 
-    result = instance.solve(timeout=timedelta(minutes=5))
-    output = {'solved': result.status==Status.OPTIMAL_SOLUTION,
+    result = mzn.solve(timeout=timedelta(minutes=5))
+    output = {'solved': result.status == Status.OPTIMAL_SOLUTION,
               'time': result.statistics['time'],
               'l': result['l'], 'xhat': result['xhat'], 'yhat': result['yhat']}
-    output.update(input)
-
-    return output
+    instance.update(output)
+    if instance['solved']:
+        print('SOLVED')
+    else:
+        print('NOT SOLVED WITHIN TIME LIMIT')
+    return instance
