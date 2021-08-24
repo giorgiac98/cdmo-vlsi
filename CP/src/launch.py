@@ -1,7 +1,30 @@
 from minizinc import Instance, Model, Solver
+from minizinc.result import Status
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from datetime import timedelta
+
+def solve_CP(input):
+    # Load the model from file
+    model = Model("vlsi.mzn")
+    # Find the MiniZinc solver configuration for Gecode
+    gecode = Solver.lookup("gecode")
+    # Create an Instance of the model for Gecode
+    instance = Instance(gecode, model)
+    # Assign 4 to n
+    instance["w"] = input['w']
+    instance['n'] = input['n']
+    instance['x'] = input['x']
+    instance['y'] = input['y']
+    instance['maxl'] = input['maxl']
+
+    result = instance.solve(timeout=timedelta(minutes=5))
+    output = {'solved': result.status==Status.OPTIMAL_SOLUTION,
+              'time': result.statistics['time'],
+              'l': result['l'], 'xhat': result['xhat'], 'yhat': result['yhat']}
+    output.update(input)
+
+    return output
 
 
 def solve_model(w, c, dim):
@@ -13,10 +36,10 @@ def solve_model(w, c, dim):
     instance = Instance(gecode, model)
     # Assign 4 to n
     instance["w"] = w
-    instance['c'] = c
-    instance['dx'] = [x[0] for x in dim]
-    instance['dy'] = [y[1] for y in dim]
-    instance['maxl'] = sum(instance['dy'])
+    instance['n'] = c
+    instance['x'] = [x[0] for x in dim]
+    instance['y'] = [y[1] for y in dim]
+    instance['maxl'] = sum(instance['y'])
 
 
     result = instance.solve(timeout=timedelta(minutes=5))
@@ -41,7 +64,7 @@ def plot(instance, width, height, blocks):
         print('Not enough colors')
 
 
-for i in range(1,41):
+for i in range(1, 41):
     lines = []
     with open(f'../../instances/ins-{i}.txt', 'r') as f:
         lines = f.readlines()
@@ -56,9 +79,11 @@ for i in range(1,41):
     instance, result = solve_model(w, c, dim)
     # Output
     print(result)
+    print(result.status == Status.OPTIMAL_SOLUTION)
+    print(result.statistics)
     out = f'{w} {result["l"]}\n{c}\n'
     out += '\n'.join([f'{dim[i][0]} {dim[i][1]} '
-                      f'{result["x"][i]} {result["y"][i]}'
+                      f'{result["xhat"][i]} {result["yhat"][i]}'
                       for i in range(c)])
     print('=====OUTPUT=====')
     print(out)
@@ -66,5 +91,5 @@ for i in range(1,41):
     with open(f'../out/ins-{i}.txt', 'w') as f:
         f.write(out)
 
-    plot(i, w, result["l"], [(instance['dx'][i], instance['dy'][i],
-        result["x"][i], result["y"][i]) for i in range(0,c)])
+    plot(i, w, result["l"], [(instance['x'][i], instance['y'][i],
+        result["xhat"][i], result["yhat"][i]) for i in range(0,c)])
