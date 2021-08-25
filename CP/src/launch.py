@@ -3,7 +3,7 @@ from minizinc.result import Status
 from datetime import timedelta
 
 
-def solve_CP(instance):
+def solve_CP(instance, timeout=300000):
     # Load the model from file
     model = Model("CP/src/vlsi.mzn")
     # Find the MiniZinc solver configuration for Gecode
@@ -17,7 +17,7 @@ def solve_CP(instance):
     mzn['y'] = instance['y']
     mzn['maxl'] = instance['maxl']
 
-    result = mzn.solve(timeout=timedelta(minutes=5))
+    result = mzn.solve(timeout=timedelta(milliseconds=timeout))
     output = {'solved': result.status == Status.OPTIMAL_SOLUTION,
               'time': result.statistics['time'],
               'l': result['l'], 'xhat': result['xhat'], 'yhat': result['yhat']}

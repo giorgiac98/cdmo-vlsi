@@ -1,7 +1,7 @@
 from z3 import Optimize, Ints, Int, Or, And, Not, Implies, Sum, If
 
 
-def solve_SMT(instance):
+def solve_SMT(instance, timeout=300000):
     assert all([k in instance for k in ('n', 'w', 'maxl', 'x', 'y')])
     components = list(range(instance['n']))
     print(f'\nW = {instance["w"]}, N = {instance["n"]}')
@@ -10,7 +10,7 @@ def solve_SMT(instance):
     w, l = Ints('width length')
     vs['w'], vs['l'] = w, l
     # basic problem constraints
-    constraints = [vs['w'] == instance["w"], vs['l'] > 0, vs['l'] <= instance['maxl']]
+    constraints = [vs['w'] == instance["w"], vs['l'] == instance['maxl']]
 
     for i in components:
         x_i, y_i = Ints(f'x_{i} y_{i}')
@@ -39,7 +39,7 @@ def solve_SMT(instance):
     constraints += no_overlap
 
     opt.add(constraints)
-    opt.set("timeout", 60000)
+    opt.set("timeout", timeout)
     opt.minimize(l)
     if str(opt.check()) == 'sat':
         print('SOLVED')

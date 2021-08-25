@@ -1,3 +1,5 @@
+from math import ceil
+
 import numpy as np
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
@@ -41,19 +43,20 @@ if __name__ == "__main__":
         with open(f'instances/ins-{i}.txt') as f:
             lines = f.readlines()
         lines = [l.strip('\n') for l in lines]
+        w = int(lines[0].strip('\n'))
+        n = int(lines[1].strip('\n'))
         dim = [l.split(' ') for l in lines[2:]]
         x, y = list(zip(*map(lambda xy: (int(xy[0]), int(xy[1])), dim)))
         xy = np.array([x, y]).T
         areas = np.prod(xy, axis=1)
-        sorted_idx = np.argsort(areas)[::-1]
-        xy = xy[sorted_idx]
-        sorted_x = list(map(int, xy[:, 0]))
-        sorted_y = list(map(int, xy[:, 1]))
-
-        instance = {"w": int(lines[0].strip('\n')),
-                    'n': int(lines[1].strip('\n')),
-                    'x': sorted_x, 'y': sorted_y,
-                    'maxl': sum(y)}
+        # sorted_idx = np.argsort(areas)[::-1]
+        # xy = xy[sorted_idx]
+        # sorted_x = list(map(int, xy[:, 0]))
+        # sorted_y = list(map(int, xy[:, 1]))
+        total_area = areas.sum()
+        maxl = ceil(total_area / w)
+        print(maxl)
+        instance = {"w": w, 'n': n, 'x': x, 'y': y, 'maxl': maxl}
         instance = solver(instance)
         if instance['solved']:
             out = f"{instance['w']} {instance['l']}\n{instance['n']}\n"
