@@ -15,6 +15,7 @@ def solve_CP(instance, timeout=300000):
     mzn['n'] = instance['n']
     mzn['x'] = instance['x']
     mzn['y'] = instance['y']
+    mzn['minl'] = instance['minl']
     mzn['maxl'] = instance['maxl']
 
     result = mzn.solve(timeout=timedelta(milliseconds=timeout))

@@ -54,9 +54,10 @@ if __name__ == "__main__":
         # sorted_x = list(map(int, xy[:, 0]))
         # sorted_y = list(map(int, xy[:, 1]))
         total_area = areas.sum()
-        maxl = ceil(total_area / w)
-        print(maxl)
-        instance = {"w": w, 'n': n, 'x': x, 'y': y, 'maxl': maxl}
+        minl = ceil(total_area / w)
+        maxl = sum(y)
+        print(minl)
+        instance = {"w": w, 'n': n, 'x': x, 'y': y, 'minl': minl, 'maxl': maxl}
         instance = solver(instance)
         if instance['solved']:
             out = f"{instance['w']} {instance['l']}\n{instance['n']}\n"
@@ -68,4 +69,3 @@ if __name__ == "__main__":
             res = [(xi, yi, xhati, yhati)
                    for xi, yi, xhati, yhati in zip(instance['x'], instance['y'], instance['xhat'], instance['yhat'])]
             plot(instance['w'], instance['l'], res, args.technology, i)
-
