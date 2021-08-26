@@ -1,5 +1,3 @@
-from math import ceil
-
 import numpy as np
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
@@ -10,7 +8,7 @@ from CP.src.launch import solve_CP
 
 def plot(width, height, blocks, tech, i, show=True):
     cmap = plt.cm.get_cmap('viridis', len(blocks))
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(9, 9))
     for component, (w, h, x, y) in enumerate(blocks):
         ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=component, lw=3, alpha=0.8))
     ax.set_ylim(0, height)
@@ -19,9 +17,12 @@ def plot(width, height, blocks, tech, i, show=True):
     ax.set_ylabel('y')
     # ax.grid(True)
     ax.legend()
+    ax.set_title(f'INSTANCE {i}')
     plt.savefig(f'{tech}/out/fig-ins-{i}.png')
     if show:
-        plt.show()
+        plt.show(block=False)
+        plt.pause(3)
+        plt.close(fig)
 
 
 if __name__ == "__main__":
@@ -29,6 +30,7 @@ if __name__ == "__main__":
     parser.add_argument('technology', type=str, help='The technology to use (CP or SMT)')
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
+    parser.add_argument('-t', '--timeout', type=int, help='Timeout (ms)', default=300000)
     args = parser.parse_args()
     if args.technology == 'CP':
         solver = solve_CP
@@ -38,7 +40,7 @@ if __name__ == "__main__":
         raise ValueError('Wrong technology, either CP or SMT')
     print(f'SOLVING INSTANCES {args.start} - {args.end} USING {args.technology} MODEL')
     for i in range(args.start, args.end + 1):
-        print('=' * 42)
+        print('=' * 20)
         print(f'INSTANCE {i}')
         with open(f'instances/ins-{i}.txt') as f:
             lines = f.readlines()
@@ -48,22 +50,19 @@ if __name__ == "__main__":
         dim = [l.split(' ') for l in lines[2:]]
         x, y = list(zip(*map(lambda xy: (int(xy[0]), int(xy[1])), dim)))
         xy = np.array([x, y]).T
-        areas = np.prod(xy, axis=1)
-        # sorted_idx = np.argsort(areas)[::-1]
-        # xy = xy[sorted_idx]
-        # sorted_x = list(map(int, xy[:, 0]))
-        # sorted_y = list(map(int, xy[:, 1]))
-        total_area = areas.sum()
-        minl = ceil(total_area / w)
-        maxl = sum(y)
-        print(minl)
+        min_area = np.prod(xy, axis=1).sum()
+        minl = int(min_area / w)
+        xy[:, 0] = xy[:, 0].max()
+        oversized_area = np.prod(xy, axis=1).sum()
+        maxl = int(oversized_area / w)
         instance = {"w": w, 'n': n, 'x': x, 'y': y, 'minl': minl, 'maxl': maxl}
         instance = solver(instance)
         if instance['solved']:
             out = f"{instance['w']} {instance['l']}\n{instance['n']}\n"
             out += '\n'.join([f"{xi} {yi} {xhati} {yhati}"
-                              for xi, yi, xhati, yhati in zip(instance['x'], instance['y'], instance['xhat'], instance['yhat'])])
-            print(out)
+                              for xi, yi, xhati, yhati in zip(instance['x'], instance['y'],
+                                                              instance['xhat'], instance['yhat'])])
+            # print(out)
             with open(f'{args.technology}/out/ins-{i}.txt', 'w') as f:
                 f.write(out)
             res = [(xi, yi, xhati, yhati)
