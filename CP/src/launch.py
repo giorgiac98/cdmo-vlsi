@@ -13,15 +13,19 @@ def solve_CP(instance, timeout=300000):
     # Assign 4 to n
     mzn["w"] = instance['w']
     mzn['n'] = instance['n']
-    mzn['x'] = instance['x']
-    mzn['y'] = instance['y']
+    mzn['x'] = instance['inputx']
+    mzn['y'] = instance['inputy']
     mzn['minl'] = instance['minl']
     mzn['maxl'] = instance['maxl']
 
-    result = mzn.solve(timeout=timedelta(milliseconds=timeout))
+    result = mzn.solve(timeout=timedelta(milliseconds=timeout), processes=2)
+    #print(result['board'])
     output = {'solved': result.status == Status.OPTIMAL_SOLUTION,
               'time': result.statistics['time'],
-              'l': result['l'], 'xhat': result['xhat'], 'yhat': result['yhat']}
+              'l': result['l'], 'xhat': result['xhat'], 'yhat': result['yhat'],
+              'x': instance['inputx'], 'y': instance['inputy'],
+              #'xsym': result['xsym'], 'ysym': result['ysym']
+              }
     instance.update(output)
     if instance['solved']:
         print('SOLVED')

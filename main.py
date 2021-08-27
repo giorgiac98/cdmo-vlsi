@@ -67,6 +67,7 @@ if __name__ == "__main__":
                                                               instance['xhat'], instance['yhat'])])
             if args.verbose:
                 print(out)
+            print(f'TIME: {instance["time"]}')
             with open(f'{args.technology}/out/ins-{i}.txt', 'w') as f:
                 f.write(out)
             res = [(xi, yi, xhati, yhati)
