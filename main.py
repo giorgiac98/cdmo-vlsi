@@ -31,6 +31,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
     parser.add_argument('-t', '--timeout', type=int, help='Timeout (ms)', default=300000)
+    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose', default=False)
     args = parser.parse_args()
     if args.technology == 'CP':
         solver = solve_CP
@@ -44,6 +45,8 @@ if __name__ == "__main__":
         print(f'INSTANCE {i}')
         with open(f'instances/ins-{i}.txt') as f:
             lines = f.readlines()
+        if args.verbose:
+            print(''.join(lines))
         lines = [l.strip('\n') for l in lines]
         w = int(lines[0].strip('\n'))
         n = int(lines[1].strip('\n'))
@@ -55,14 +58,15 @@ if __name__ == "__main__":
         xy[:, 0] = xy[:, 0].max()
         oversized_area = np.prod(xy, axis=1).sum()
         maxl = int(oversized_area / w)
-        instance = {"w": w, 'n': n, 'x': x, 'y': y, 'minl': minl, 'maxl': maxl}
+        instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minl': minl, 'maxl': maxl}
         instance = solver(instance)
         if instance['solved']:
             out = f"{instance['w']} {instance['l']}\n{instance['n']}\n"
             out += '\n'.join([f"{xi} {yi} {xhati} {yhati}"
                               for xi, yi, xhati, yhati in zip(instance['x'], instance['y'],
                                                               instance['xhat'], instance['yhat'])])
-            # print(out)
+            if args.verbose:
+                print(out)
             with open(f'{args.technology}/out/ins-{i}.txt', 'w') as f:
                 f.write(out)
             res = [(xi, yi, xhati, yhati)
