@@ -24,7 +24,7 @@ def base_model(instance):
     w, l = Ints('width length')
     components = list(range(instance['n']))
     # board for dual model
-    board = [[Int(f'B_{c}_{r}') for r in range(instance["w"])] for c in range(instance['minl'])]
+    board = [[Int(f'B_{c}_{r}') for r in range(instance["w"])] for c in range(instance['maxl'])]
     vs['w'], vs['l'] = w, l
     vs['board'] = board
     # basic problem constraints
@@ -53,11 +53,11 @@ def base_model(instance):
         # channeling constraints
         constraints += [(board[c][r] == i) == (And(vs[f'xhat_{i}'] <= r, vs[f'xhat_{i}'] + vs[f'x_{i}'] > r,
                                                    vs[f'yhat_{i}'] <= c, vs[f'yhat_{i}'] + vs[f'y_{i}'] > c))
-                        for r in range(instance["w"]) for c in range(instance['minl'])]
+                        for r in range(instance["w"]) for c in range(instance['maxl'])]
 
         # implied constraints: for each component i, # of cells of the board with value i must be equal to area_i
         constraints.append(Sum([If(board[c][r] == i, 1, 0)
-                                for r in range(instance["w"]) for c in range(instance['minl'])])
+                                for r in range(instance["w"]) for c in range(instance['maxl'])])
                            == area_i)
 
     # implied constraints: for each horizontal (and vertical) line, the sum of traversed sides is bounded
@@ -70,7 +70,7 @@ def base_model(instance):
 
     # board constraints
     constraints += [And(board[c][r] >= 0, board[c][r] <= instance['n'])
-                    for r in range(instance["w"]) for c in range(instance['minl'])]
+                    for r in range(instance["w"]) for c in range(instance['maxl'])]
 
     # no overlap constraints
     constraints += [
