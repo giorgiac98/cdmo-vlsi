@@ -1,13 +1,30 @@
 from z3 import *
 
 
+def lex(x, y):
+    # given arrays x and y, returns constraint imposing lex<= order between a and b
+    # X1 ≤ Y1 ∧
+    # (X1 = Y1 -> X2 ≤ Y2) ∧
+    # (X1 = Y1 ∧ X2 = Y2 -> X3 ≤ Y3) ...
+    # (X1 = Y1 ∧ X2 = Y2 ... ∧ Xk-1 = Yk-1 -> Xk ≤ Yk)
+    # more elegant but maybe less efficient:
+    # And([Implies(And([x[i] == y[i] for i in range(k)]), x[k] <= y[k]) for k in range(len(x))])
+
+    return And([x[0] <= y[0]] +
+               [Implies(And([x[i] == y[i] for i in range(k)]), x[k] <= y[k]) for k in range(1, len(x))])
+
+
+def flatten(matrix):
+    return [cell for row in matrix for cell in row]
+
+
 def base_model(instance):
     vs = {}
     # define main problem variables and constraints
     w, l = Ints('width length')
     components = list(range(instance['n']))
     # board for dual model
-    board = [[Int(f'B_{c}_{r}') for r in range(instance["w"])] for c in range(instance['maxl'])]
+    board = [[Int(f'B_{c}_{r}') for r in range(instance["w"])] for c in range(instance['minl'])]
     vs['w'], vs['l'] = w, l
     vs['board'] = board
     # basic problem constraints
@@ -33,16 +50,27 @@ def base_model(instance):
 
         constraints.append(area_i == (x_i * y_i))
 
+        # channeling constraints
+        constraints += [(board[c][r] == i) == (And(vs[f'xhat_{i}'] <= r, vs[f'xhat_{i}'] + vs[f'x_{i}'] > r,
+                                                   vs[f'yhat_{i}'] <= c, vs[f'yhat_{i}'] + vs[f'y_{i}'] > c))
+                        for r in range(instance["w"]) for c in range(instance['minl'])]
 
-
+        # implied constraints: for each component i, # of cells of the board with value i must be equal to area_i
+        constraints.append(Sum([If(board[c][r] == i, 1, 0)
+                                for r in range(instance["w"]) for c in range(instance['minl'])])
+                           == area_i)
 
     # implied constraints: for each horizontal (and vertical) line, the sum of traversed sides is bounded
     for col in range(instance['w']):
         constraints.append(Sum([If(And(vs[f'xhat_{i}'] < col, col <= vs[f'xhat_{i}'] + vs[f'x_{i}']), vs[f'y_{i}'], 0)
-                                for i in components]) <= vs['w'])
+                                for i in components]) <= vs['l'])
     for row in range(instance['maxl']):
         constraints.append(Sum([If(And(vs[f'yhat_{i}'] < row, row <= vs[f'yhat_{i}'] + vs[f'y_{i}']), vs[f'x_{i}'], 0)
-                                for i in components]) <= vs['l'])
+                                for i in components]) <= vs['w'])
+
+    # board constraints
+    constraints += [And(board[c][r] >= 0, board[c][r] <= instance['n'])
+                    for r in range(instance["w"]) for c in range(instance['minl'])]
 
     # no overlap constraints
     constraints += [
@@ -58,5 +86,12 @@ def base_model(instance):
     constraints += [Implies(And(vs[f'yhat_{i}'] == vs[f'yhat_{j}'], vs[f'y_{i}'] == vs[f'y_{j}']),
                             vs[f'xhat_{i}'] <= vs[f'xhat_{j}'])
                     for i in components for j in components if i < j]
+
+    constraints.append(lex(flatten(board),
+                           [board[j][i] for i in range(instance['w']) for j in range(instance['maxl'] - 1, -1, -1)]))
+    constraints.append(lex(flatten(board),
+                           [board[j][i] for i in range(instance['w'] - 1, -1, -1) for j in range(instance['maxl'])]))
+    constraints.append(lex(flatten(board),
+                           [board[j][i] for i in range(instance['w'] - 1, -1, -1) for j in range(instance['maxl'] - 1, -1, -1)]))
 
     return constraints, vs
