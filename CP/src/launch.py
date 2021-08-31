@@ -10,7 +10,7 @@ def solve_CP(instance, timeout=300000):
     gecode = Solver.lookup("gecode")
     # Create a minizinc instance of the model for Gecode
     mzn = Instance(gecode, model)
-    # Assign 4 to n
+    # Initialization
     mzn["w"] = instance['w']
     mzn['n'] = instance['n']
     mzn['x'] = instance['inputx']
@@ -19,12 +19,12 @@ def solve_CP(instance, timeout=300000):
     mzn['maxl'] = instance['maxl']
 
     result = mzn.solve(timeout=timedelta(milliseconds=timeout), processes=2)
-    #print(result['board'])
+    # print(result['board'])
     output = {'solved': result.status == Status.OPTIMAL_SOLUTION,
               'time': result.statistics['time'],
               'l': result['l'], 'xhat': result['xhat'], 'yhat': result['yhat'],
               'x': instance['inputx'], 'y': instance['inputy'],
-              #'xsym': result['xsym'], 'ysym': result['ysym']
+              # 'xsym': result['xsym'], 'ysym': result['ysym']
               }
     instance.update(output)
     if instance['solved']:
