@@ -20,12 +20,15 @@ def solve_CP(instance, timeout=300000):
 
     result = mzn.solve(timeout=timedelta(milliseconds=timeout), processes=2)
     # print(result['board'])
-    output = {'solved': result.status == Status.OPTIMAL_SOLUTION,
-              'time': result.statistics['time'],
-              'l': result['l'], 'xhat': result['xhat'], 'yhat': result['yhat'],
-              'x': instance['inputx'], 'y': instance['inputy'],
-              # 'xsym': result['xsym'], 'ysym': result['ysym']
-              }
+    if result.status == Status.OPTIMAL_SOLUTION:
+        output = {'solved': True,
+                  'time': result.statistics['time'],
+                  'l': result['l'], 'xhat': result['xhat'], 'yhat': result['yhat'],
+                  'x': instance['inputx'], 'y': instance['inputy'],
+                  # 'xsym': result['xsym'], 'ysym': result['ysym']
+                  }
+    else:
+        output = {'solved': False}
     instance.update(output)
     if instance['solved']:
         print('SOLVED')
