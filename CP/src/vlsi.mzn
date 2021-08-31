@@ -17,7 +17,7 @@ array [nRange] of 1..maxl: y;
 
 array [nRange] of var xRange: xhat;
 array [nRange] of var yRange: yhat;
-
+/*
 array [nRange] of var xRange: xsym;
 array [nRange] of var yRange: ysym;
 
@@ -40,27 +40,21 @@ constraint forall (j in yRange, k in xRange, i in nRange)
 
 constraint forall (j in yRange, k in xRange, i in nRange)
         (k >= xsym[i] /\ k < (xsym[i]+x[i]) /\ j >= ysym[i] /\ j < (ysym[i]+y[i]) <-> boardXYsym[j, k] = i);
-/*
+
 % symmetry breaking constraints
 constraint lex_lesseq(array1d(board), array1d(boardXsym));
 constraint lex_lesseq(array1d(board), array1d(boardYsym));
 constraint lex_lesseq(array1d(board), array1d(boardXYsym));
 
-% three blocks symmetry
-constraint forall (i,j,k in nRange where i < j /\ j < k)
-        ((xhat[i] == xhat[j] /\ x[i] == x[j] /\ yhat[i] = yhat[k] /\ y[i] + y[j] = y[k])
-        -> xhat[i] <= xhat[k] /\ xhat[i] = xhat[j]);
-constraint forall (i,j,k in nRange where i < j /\ j < k)
-        ((yhat[i] == yhat[j] /\ y[i] == y[j] /\ xhat[i] = xhat[k] /\ x[i] + x[k] = x[k])
-        -> yhat[i] <= yhat[k] /\ yhat[i] = yhat[j]);
 */
-
+% rows and columns symmetry
 constraint forall (i,j in nRange where i < j) ((xhat[i] == xhat[j] /\ x[i] == x[j]) ->
         (if y[i] <= y[j] then yhat[i] <= yhat[j] else yhat[j] <= yhat[i] endif));
 
 constraint forall (i,j in nRange where i < j) ((yhat[i] == yhat[j] /\ y[i] == y[j]) ->
         (if x[i] <= x[j] then xhat[i] <= xhat[j] else xhat[j] <= xhat[i] endif));
 
+% three blocks symmetry
 constraint forall (i,j,k in nRange where i < j /\ j < k)
         ((xhat[i] == xhat[j] /\ x[i] == x[j] /\ yhat[i] = yhat[k] /\ y[i] + y[j] = y[k]) ->
         (if x[i] <= x[k] then xhat[i] <= xhat[k] /\ xhat[i] = xhat[j] else xhat[k] <= xhat[i] /\ xhat[i] = xhat[j] endif));
