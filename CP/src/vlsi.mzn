@@ -27,10 +27,13 @@ array [yRange, xRange] of var 1..n+1: boardYsym;
 array [yRange, xRange] of var 1..n+1: boardXYsym;
 
 % channeling constraints
-constraint forall (j in yRange, k in xRange, i in nRange)
-        (k >= xhat[i] /\ k < (xhat[i]+x[i]) /\ j >= yhat[i] /\ j < (yhat[i]+y[i]) <-> board[j, k] = i);
 
 constraint forall (i in nRange) (xsym[i] = w - x[i] - xhat[i] /\ ysym[i] = l - y[i] - yhat[i]);
+constraint xhat[1] <= xsym[1];
+constraint yhat[1] <= ysym[1];
+
+constraint forall (j in yRange, k in xRange, i in nRange)
+        (k >= xhat[i] /\ k < (xhat[i]+x[i]) /\ j >= yhat[i] /\ j < (yhat[i]+y[i]) <-> board[j, k] = i);
 
 constraint forall (j in yRange, k in xRange, i in nRange)
         (k >= xsym[i] /\ k < (xsym[i]+x[i]) /\ j >= yhat[i] /\ j < (yhat[i]+y[i]) <-> boardXsym[j, k] = i);
@@ -45,8 +48,8 @@ constraint forall (j in yRange, k in xRange, i in nRange)
 constraint lex_lesseq(array1d(board), array1d(boardXsym));
 constraint lex_lesseq(array1d(board), array1d(boardYsym));
 constraint lex_lesseq(array1d(board), array1d(boardXYsym));
-
 */
+
 % rows and columns symmetry
 constraint forall (i,j in nRange where i < j) ((xhat[i] == xhat[j] /\ x[i] == x[j]) ->
         (if y[i] <= y[j] then yhat[i] <= yhat[j] else yhat[j] <= yhat[i] endif));
@@ -75,4 +78,7 @@ constraint diffn(xhat, yhat, x, y);
 constraint forall (i in nRange) (xhat[i] + x[i] <= w);
 constraint forall (i in nRange) (yhat[i] + y[i] <= l);
 
-solve minimize l;
+solve :: seq_search([
+            int_search(xhat, smallest, indomain_min),
+            int_search(yhat, smallest, indomain_min)])
+        minimize l;
