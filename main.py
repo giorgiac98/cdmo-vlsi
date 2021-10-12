@@ -33,16 +33,23 @@ if __name__ == "__main__":
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
     parser.add_argument('-t', '--timeout', type=int, help='Timeout (ms)', default=300000)
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
+    parser.add_argument('-a', '--area', action="store_true", help="orders circuits by area")
     parser.add_argument('-r', '--rotation', action="store_true", help="enables circuits rotation")
 
     # technology-specific arguments
     parser.add_argument('--solver', type=str, help='CP solver (default: chuffed)', default='chuffed')
+    parser.add_argument('--heu', type=int, help='CP search heuristic (default: impact, min)', default=3)
+    parser.add_argument('--restart', type=int, help='CP restart strategy (default: luby)', default=3)
     args = parser.parse_args()
     if args.technology == 'CP':
         solver = solve_CP
         if args.solver not in ('gecode', 'chuffed'):
             raise ValueError(f'wrong solver {args.solver}; supported ones are gecode and chuffed')
-        params = {'solver': args.solver}
+        if args.heu not in (1, 2, 3):
+            raise ValueError(f'wrong search heuristic {args.heu}; supported ones are gecode and chuffed')
+        if args.restart not in (1, 2, 3):
+            raise ValueError(f'wrong solver {args.solver}; supported ones are gecode and chuffed')
+        params = {'solver': args.solver, 'search_heuristic': args.heu, 'restart_strategy': args.restart}
     elif args.technology == 'SMT':
         solver = solve_SMT
         params = {}
@@ -66,6 +73,12 @@ if __name__ == "__main__":
         dim = [l.split(' ') for l in lines[2:]]
         x, y = list(zip(*map(lambda xy: (int(xy[0]), int(xy[1])), dim)))
         xy = np.array([x, y]).T
+        if args.area:
+            areas = np.prod(xy, axis=1)
+            sorted_idx = np.argsort(areas)[::-1]
+            xy = xy[sorted_idx]
+            x = list(map(int, xy[:, 0]))
+            y = list(map(int, xy[:, 1]))
         min_area = np.prod(xy, axis=1).sum()
         minl = int(min_area / w)
         xy[:, 0] = xy[:, 0].max()

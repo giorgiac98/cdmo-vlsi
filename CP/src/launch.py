@@ -3,7 +3,7 @@ from minizinc.result import Status
 from datetime import timedelta
 
 
-def solve_CP(instance, solver, timeout=300000):
+def solve_CP(instance, solver, search_heuristic, restart_strategy, timeout=300000):
     model = Model("CP/src/vlsi.mzn")
     gecode = Solver.lookup(solver)
     mzn = Instance(gecode, model)
@@ -14,6 +14,8 @@ def solve_CP(instance, solver, timeout=300000):
     mzn['y'] = instance['inputy']
     mzn['minl'] = instance['minl']
     mzn['maxl'] = instance['maxl']
+    mzn['search_heuristic'] = search_heuristic
+    mzn['restart_strategy'] = restart_strategy
 
     processes = -1 if solver == 'gecode' else None
     result = mzn.solve(timeout=timedelta(milliseconds=timeout), processes=processes)
