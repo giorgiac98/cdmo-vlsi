@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
@@ -47,6 +48,10 @@ if __name__ == "__main__":
         params = {}
     else:
         raise ValueError('Wrong technology, either CP or SMT')
+
+    if not os.path.exists(f'{args.technology}/out'):
+        os.mkdir(f'{args.technology}/out')
+
     print(f'SOLVING INSTANCES {args.start} - {args.end} USING {args.technology} MODEL')
     for i in range(args.start, args.end + 1):
         print('=' * 20)
