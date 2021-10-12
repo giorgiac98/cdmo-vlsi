@@ -31,12 +31,20 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
     parser.add_argument('-t', '--timeout', type=int, help='Timeout (ms)', default=300000)
-    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose', default=False)
+    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
+    parser.add_argument('-r', '--rotation', action="store_true", help="enables circuits rotation")
+
+    # technology-specific arguments
+    parser.add_argument('--solver', type=str, help='CP solver (default: chuffed)', default='chuffed')
     args = parser.parse_args()
     if args.technology == 'CP':
         solver = solve_CP
+        if args.solver not in ('gecode', 'chuffed'):
+            raise ValueError(f'wrong solver {args.solver}; supported ones are gecode and chuffed')
+        params = {'solver': args.solver}
     elif args.technology == 'SMT':
         solver = solve_SMT
+        params = {}
     else:
         raise ValueError('Wrong technology, either CP or SMT')
     print(f'SOLVING INSTANCES {args.start} - {args.end} USING {args.technology} MODEL')
@@ -59,7 +67,7 @@ if __name__ == "__main__":
         oversized_area = np.prod(xy, axis=1).sum()
         maxl = int(oversized_area / w)
         instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minl': minl, 'maxl': maxl}
-        instance = solver(instance)
+        instance = solver(instance, **params)
         if instance['solved']:
             out = f"{instance['w']} {instance['l']}\n{instance['n']}\n"
             out += '\n'.join([f"{xi} {yi} {xhati} {yhati}"
