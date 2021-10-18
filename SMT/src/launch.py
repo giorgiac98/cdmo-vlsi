@@ -4,12 +4,12 @@ from SMT.src.base_model import base_model
 from SMT.src.array_model import array_model
 
 
-def solve_SMT(instance, kind='base', timeout=300000):
+def solve_SMT(instance, rotation, kind='base', timeout=300000):
     print(f'W = {instance["w"]}, N = {instance["n"]}')
     opt = Optimize()
     start_time = time()
     if kind == 'base':
-        constraints, vs = base_model(instance)
+        constraints, vs = base_model(instance, rotation)
     elif kind == 'array':
         constraints, vs = array_model(instance)
     else:
@@ -31,6 +31,8 @@ def solve_SMT(instance, kind='base', timeout=300000):
             instance['y'] = instance['inputy']
             instance['xhat'] = [model[vs[f'xhat_{i}']].as_long() for i in range(instance['n'])]
             instance['yhat'] = [model[vs[f'yhat_{i}']].as_long() for i in range(instance['n'])]
+            if rotation:
+                instance['rotation'] = [model[vs[f'rotation_{i}']] for i in range(instance['n'])]
         else:
             instance['x'] = [model.eval(vs['X'][i]).as_long() for i in range(instance['n'])]
             instance['y'] = [model.eval(vs['Y'][i]).as_long() for i in range(instance['n'])]

@@ -7,11 +7,14 @@ from SMT.src.launch import solve_SMT
 from CP.src.launch import solve_CP
 
 
-def plot(width, height, blocks, tech, i, show=True):
+def plot(width, height, blocks, tech, i, rotation, show=True):
     cmap = plt.cm.get_cmap('viridis', len(blocks))
     fig, ax = plt.subplots(figsize=(9, 9))
     for component, (w, h, x, y) in enumerate(blocks):
-        ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=component, lw=3, alpha=0.8))
+        label = f'{w}x{h}'
+        if rotation is not None:
+            label += f', R={1 if rotation[component] else 0}'
+        ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=3, alpha=0.8))
     ax.set_ylim(0, height)
     ax.set_xlim(0, width)
     ax.set_xlabel('x')
@@ -41,6 +44,7 @@ if __name__ == "__main__":
     parser.add_argument('--heu', type=int, help='CP search heuristic (default: impact, min)', default=3)
     parser.add_argument('--restart', type=int, help='CP restart strategy (default: luby)', default=3)
     args = parser.parse_args()
+    params = {'rotation': args.rotation}
     if args.technology == 'CP':
         solver = solve_CP
         if args.solver not in ('gecode', 'chuffed'):
@@ -49,10 +53,9 @@ if __name__ == "__main__":
             raise ValueError(f'wrong search heuristic {args.heu}; supported ones are gecode and chuffed')
         if args.restart not in (1, 2, 3):
             raise ValueError(f'wrong solver {args.solver}; supported ones are gecode and chuffed')
-        params = {'solver': args.solver, 'search_heuristic': args.heu, 'restart_strategy': args.restart}
+        params.update({'solver': args.solver, 'search_heuristic': args.heu, 'restart_strategy': args.restart})
     elif args.technology == 'SMT':
         solver = solve_SMT
-        params = {}
     else:
         raise ValueError('Wrong technology, either CP or SMT')
 
@@ -98,4 +101,4 @@ if __name__ == "__main__":
                 f.write(out)
             res = [(xi, yi, xhati, yhati)
                    for xi, yi, xhati, yhati in zip(instance['x'], instance['y'], instance['xhat'], instance['yhat'])]
-            plot(instance['w'], instance['l'], res, args.technology, i)
+            plot(instance['w'], instance['l'], res, args.technology, i, instance['rotation'])

@@ -22,7 +22,7 @@ def base_model(instance, rotation):
     vs = {}
     # define main problem variables and constraints
     w, l = Ints('width length')
-    components = list(range(instance['n']))
+    circuits = list(range(instance['n']))
     # board for dual model
     #board = [[Int(f'B_{c}_{r}') for r in range(instance["w"])] for c in range(instance['maxl'])]
     vs['w'], vs['l'] = w, l
@@ -30,7 +30,7 @@ def base_model(instance, rotation):
     # basic problem constraints
     constraints = [vs['w'] == instance["w"], vs['l'] >= instance['minl'], vs['l'] <= instance['maxl']]
 
-    for i in components:
+    for i in circuits:
         x_i, y_i = Ints(f'x_{i} y_{i}')
         xhat_i, yhat_i = Ints(f'xhat_{i} yhat_{i}')
         area_i = Int(f'area_{i}')
@@ -69,10 +69,10 @@ def base_model(instance, rotation):
     # implied constraints: for each horizontal (and vertical) line, the sum of traversed sides is bounded
     for col in range(instance['w']):
         constraints.append(Sum([If(And(vs[f'xhat_{i}'] < col, col <= vs[f'xhat_{i}'] + vs[f'x_{i}']), vs[f'y_{i}'], 0)
-                                for i in components]) <= vs['l'])
+                                for i in circuits]) <= vs['l'])
     for row in range(instance['maxl']):
         constraints.append(Sum([If(And(vs[f'yhat_{i}'] < row, row <= vs[f'yhat_{i}'] + vs[f'y_{i}']), vs[f'x_{i}'], 0)
-                                for i in components]) <= vs['w'])
+                                for i in circuits]) <= vs['w'])
 
     # board constraints
     #constraints += [And(board[c][r] >= 0, board[c][r] <= instance['n'])
@@ -82,31 +82,31 @@ def base_model(instance, rotation):
     constraints += [
         Or(vs[f'xhat_{i}'] + vs[f'x_{i}'] <= vs[f'xhat_{j}'], vs[f'yhat_{i}'] + vs[f'y_{i}'] <= vs[f'yhat_{j}'],
            vs[f'xhat_{j}'] + vs[f'x_{j}'] <= vs[f'xhat_{i}'], vs[f'yhat_{j}'] + vs[f'y_{j}'] <= vs[f'yhat_{i}'])
-        for i in components for j in components if i < j]
+        for i in circuits for j in circuits if i < j]
 
     # symmetry breaking
     # rows and columns symmetry
     constraints += [Implies(And(vs[f'xhat_{i}'] == vs[f'xhat_{j}'], vs[f'x_{i}'] == vs[f'x_{j}']),
                             If(vs[f'y_{i}'] <= vs[f'y_{j}'], vs[f'yhat_{j}'] <= vs[f'yhat_{i}'], vs[f'yhat_{i}'] <= vs[f'yhat_{j}']))
-                    for i in components for j in components if i < j]
+                    for i in circuits for j in circuits if i < j]
 
     constraints += [Implies(And(vs[f'yhat_{i}'] == vs[f'yhat_{j}'], vs[f'y_{i}'] == vs[f'y_{j}']),
                             If(vs[f'x_{i}'] <= vs[f'x_{j}'], vs[f'xhat_{j}'] <= vs[f'xhat_{i}'], vs[f'xhat_{i}'] <= vs[f'xhat_{j}']))
-                    for i in components for j in components if i < j]
+                    for i in circuits for j in circuits if i < j]
     # three block symmetry
     constraints += [Implies(And(vs[f'xhat_{i}'] == vs[f'xhat_{j}'], vs[f'x_{i}'] == vs[f'x_{j}'],
                                 vs[f'yhat_{i}'] == vs[f'yhat_{k}'], vs[f'y_{i}'] + vs[f'y_{j}'] == vs[f'y_{k}']),
                             If(vs[f'x_{i}'] <= vs[f'x_{k}'],
                                 And(vs[f'xhat_{i}'] <= vs[f'xhat_{k}'], vs[f'xhat_{i}'] == vs[f'xhat_{j}']),
                                 And(vs[f'xhat_{k}'] <= vs[f'xhat_{i}'], vs[f'xhat_{i}'] == vs[f'xhat_{j}'])))
-                    for i in components for j in components for k in components if i < j and j < k]
+                    for i in circuits for j in circuits for k in circuits if i < j and j < k]
 
     constraints += [Implies(And(vs[f'yhat_{i}'] == vs[f'yhat_{j}'], vs[f'y_{i}'] == vs[f'y_{j}'],
                                 vs[f'xhat_{i}'] == vs[f'xhat_{k}'], vs[f'x_{i}'] + vs[f'x_{j}'] == vs[f'x_{k}']),
                             If(vs[f'y_{i}'] <= vs[f'y_{k}'],
                                 And(vs[f'yhat_{i}'] <= vs[f'yhat_{k}'], vs[f'yhat_{i}'] == vs[f'yhat_{j}']),
                                 And(vs[f'yhat_{k}'] <= vs[f'yhat_{i}'], vs[f'yhat_{i}'] == vs[f'yhat_{j}'])))
-                    for i in components for j in components for k in components if i < j and j < k]
+                    for i in circuits for j in circuits for k in circuits if i < j and j < k]
 
     #constraints.append(lex(flatten(board),
     #                       [board[j][i] for i in range(instance['w']) for j in range(instance['maxl'] - 1, -1, -1)]))
