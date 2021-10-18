@@ -41,8 +41,9 @@ def base_model(instance, rotation):
         if rotation:
             rotation_i = Bool(f'rotation_{i}')
             vs[f'rotation_{i}'] = rotation_i
-            constraints.append(If(rotation_i, x_i == (instance['inputy'][i]), x_i == (instance['inputx'][i])))
-            constraints.append(If(rotation_i, y_i == (instance['inputx'][i]), y_i == (instance['inputy'][i])))
+            constraints.append(If(rotation_i,
+                                And(y_i == (instance['inputx'][i]), x_i == (instance['inputy'][i])),
+                                And(y_i == (instance['inputy'][i]), x_i == (instance['inputx'][i]))))
         else:
             constraints.append(x_i == (instance['inputx'][i]))
             constraints.append(y_i == (instance['inputy'][i]))
