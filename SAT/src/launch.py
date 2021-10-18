@@ -6,9 +6,8 @@ def base_model(instance, l):
     constraints = []
     vs = {}
     circuits = list(range(instance['n']))
-    xs = list(range(instance['']))
 
-    plate_cube = [[Bool(f'B_{i}_{j}_{k}') for k in circuits] for j in ]
+    vs['B'] = [[[Bool(f'B_{i}_{j}_{k}') for k in circuits] for j in range(instance['w'])] for i in range(l)]
 
     return constraints, vs
 

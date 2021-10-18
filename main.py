@@ -87,7 +87,7 @@ if __name__ == "__main__":
         xy[:, 0] = xy[:, 0].max()
         oversized_area = np.prod(xy, axis=1).sum()
         maxl = int(oversized_area / w)
-        instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minl': minl, 'maxl': maxl}
+        instance = {"w": w, 'n': n, 'inputx': x, 'inputy': y, 'minl': minl, 'maxl': maxl, 'rotation': None}
         instance = solver(instance, **params)
         if instance['solved']:
             out = f"{instance['w']} {instance['l']}\n{instance['n']}\n"
