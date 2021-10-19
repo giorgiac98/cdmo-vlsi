@@ -3,15 +3,16 @@ import numpy as np
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from SMT.src.launch import solve_SMT
 from CP.src.launch import solve_CP
+from SAT.src.launch import solve_SAT
+from SMT.src.launch import solve_SMT
 
 
 def plot(width, height, blocks, tech, i, rotation, show=True):
     cmap = plt.cm.get_cmap('viridis', len(blocks))
     fig, ax = plt.subplots(figsize=(9, 9))
     for component, (w, h, x, y) in enumerate(blocks):
-        label = f'{w}x{h}'
+        label = f'{w}x{h}, ({x},{y})'
         if rotation is not None:
             label += f', R={1 if rotation[component] else 0}'
         ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=3, alpha=0.8))
@@ -44,6 +45,7 @@ if __name__ == "__main__":
     parser.add_argument('--heu', type=int, help='CP search heuristic (default: impact, min)', default=3)
     parser.add_argument('--restart', type=int, help='CP restart strategy (default: luby)', default=3)
     args = parser.parse_args()
+    args.technology = args.technology.upper()
     params = {'rotation': args.rotation}
     if args.technology == 'CP':
         solver = solve_CP
@@ -54,6 +56,8 @@ if __name__ == "__main__":
         if args.restart not in (1, 2, 3):
             raise ValueError(f'wrong solver {args.solver}; supported ones are gecode and chuffed')
         params.update({'solver': args.solver, 'search_heuristic': args.heu, 'restart_strategy': args.restart})
+    elif args.technology == 'SAT':
+        solver = solve_SAT
     elif args.technology == 'SMT':
         solver = solve_SMT
     else:
