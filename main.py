@@ -8,7 +8,7 @@ from SAT.src.launch import solve_SAT
 from SMT.src.launch import solve_SMT
 
 
-def plot(width, height, blocks, tech, i, rotation, show=True):
+def plot(width, height, blocks, tech, i, rotation, show_plot=True, show_axis=False):
     cmap = plt.cm.get_cmap('viridis', len(blocks))
     fig, ax = plt.subplots(figsize=(9, 9))
     for component, (w, h, x, y) in enumerate(blocks):
@@ -18,13 +18,16 @@ def plot(width, height, blocks, tech, i, rotation, show=True):
         ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=3, alpha=0.8))
     ax.set_ylim(0, height)
     ax.set_xlim(0, width)
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
+    ax.set_xlabel('width', fontsize=22)
+    ax.set_ylabel('length', fontsize=22)
     # ax.grid(True)
-    ax.legend()
-    ax.set_title(f'INSTANCE {i}')
+    # ax.legend()
+    ax.set_title(f'INSTANCE {i}', fontsize=30)
+    if not show_axis:
+        ax.set_xticks([])
+        ax.set_yticks([])
     plt.savefig(f'{tech}/out/fig-ins-{i}.png')
-    if show:
+    if show_plot:
         plt.show(block=False)
         plt.pause(3)
         plt.close(fig)
