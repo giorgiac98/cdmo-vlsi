@@ -38,7 +38,8 @@ def solve_SMT(instance, rotation, kind='base', timeout=300000):
             instance['y'] = [model.eval(vs['Y'][i]).as_long() for i in range(instance['n'])]
             instance['xhat'] = [model.eval(vs['Xhat'][i]).as_long() for i in range(instance['n'])]
             instance['yhat'] = [model.eval(vs['Yhat'][i]).as_long() for i in range(instance['n'])]
-        instance['time'] = f'setup: {setup_time:.2f} s, solve: {solve_time:.2f} s'
+        instance['fulltime'] = f'setup: {setup_time:.2f} s, solve: {solve_time:.2f} s'
+        instance['time'] = setup_time + solve_time
     elif str(opt.check()) == 'unsat':
         print('UNSOLVABLE')
         instance['solved'] = False

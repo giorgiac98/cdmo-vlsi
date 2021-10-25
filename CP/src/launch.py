@@ -25,8 +25,11 @@ def solve_CP(instance, rotation, solver, search_heuristic, restart_strategy, tim
     result = mzn.solve(timeout=timedelta(milliseconds=timeout), processes=processes)
     # print(result['board'])
     if result.status == Status.OPTIMAL_SOLUTION:
-        output = {'solved': True, 'time': result.statistics['time'], 'l': result.objective, 'xhat': result['xhat'],
-                  'yhat': result['yhat'], 'x': result['x'], 'y': result['y'],
+        output = {'solved': True, 'l': result.objective, 'xhat': result['xhat'], 'yhat': result['yhat'],
+                  'x': result['x'] if rotation else instance['inputx'],
+                  'y': result['y'] if rotation else instance['inputy'],
+                  'fulltime': f'total: {result.statistics["time"]}',
+                  'time': (result.statistics['time'].microseconds / (10 ** 6)) + result.statistics['time'].seconds,
                   'rotation': result['rotation'] if rotation else None}
     else:
         output = {'solved': False}

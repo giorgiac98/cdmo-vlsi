@@ -8,7 +8,7 @@ from SAT.src.launch import solve_SAT
 from SMT.src.launch import solve_SMT
 
 
-def plot(width, height, blocks, tech, i, rotation, show_plot=True, show_axis=False):
+def plot_board(width, height, blocks, args, i, rotation, show_plot=True, show_axis=False):
     cmap = plt.cm.get_cmap('viridis', len(blocks))
     fig, ax = plt.subplots(figsize=(9, 9))
     for component, (w, h, x, y) in enumerate(blocks):
@@ -18,19 +18,29 @@ def plot(width, height, blocks, tech, i, rotation, show_plot=True, show_axis=Fal
         ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=3, alpha=0.8))
     ax.set_ylim(0, height)
     ax.set_xlim(0, width)
-    ax.set_xlabel('width', fontsize=22)
-    ax.set_ylabel('length', fontsize=22)
+    ax.set_xlabel('width', fontsize=15)
+    ax.set_ylabel('length', fontsize=15)
     # ax.grid(True)
-    # ax.legend()
-    ax.set_title(f'INSTANCE {i}', fontsize=30)
+    ax.legend()
+    ax.set_title(f'Instance {i}, size (WxH): {width}x{height}', fontsize=22)
     if not show_axis:
         ax.set_xticks([])
         ax.set_yticks([])
-    plt.savefig(f'{tech}/out/fig-ins-{i}.png')
+    plt.savefig(f'{args.technology}/out/fig-ins-{i}.png')
     if show_plot:
         plt.show(block=False)
-        plt.pause(3)
+        plt.pause(1)
         plt.close(fig)
+
+
+def plot_timings(timings, args):
+    fig, ax = plt.subplots(1, 1)
+    ax.bar(range(len(timings)), timings)
+    ax.set_title('Execution time for each instance')
+    ax.set_xlabel('Instance')
+    ax.set_ylabel('Time (s)')
+    plt.savefig(f'{args.technology}/out/timings.png')
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -70,6 +80,7 @@ if __name__ == "__main__":
         os.mkdir(f'{args.technology}/out')
 
     print(f'SOLVING INSTANCES {args.start} - {args.end} USING {args.technology} MODEL')
+    timings = []
     for i in range(args.start, args.end + 1):
         print('=' * 20)
         print(f'INSTANCE {i}')
@@ -103,9 +114,11 @@ if __name__ == "__main__":
                                                               instance['xhat'], instance['yhat'])])
             if args.verbose:
                 print(out)
-            print(f'TIME: {instance["time"]}')
-            with open(f'{args.technology}/out/ins-{i}.txt', 'w') as f:
+            print(f'TIME: {instance["fulltime"]}')
+            timings.append(instance['time'])
+            with open(f'{args.technology}/out/out-{i}.txt', 'w') as f:
                 f.write(out)
             res = [(xi, yi, xhati, yhati)
                    for xi, yi, xhati, yhati in zip(instance['x'], instance['y'], instance['xhat'], instance['yhat'])]
-            plot(instance['w'], instance['l'], res, args.technology, i, instance['rotation'])
+            plot_board(instance['w'], instance['l'], res, args, i, instance['rotation'])
+    plot_timings(timings, args)
