@@ -8,19 +8,18 @@ from SAT.src.launch import solve_SAT
 from SMT.src.launch import solve_SMT
 
 
-def plot_board(width, height, blocks, args, i, rotation, show_plot=True, show_axis=False):
-    cmap = plt.cm.get_cmap('viridis', len(blocks))
+def plot_board(width, height, blocks, args, i, rotation, show_plot=False, show_axis=False):
+    cmap = plt.cm.get_cmap('nipy_spectral', len(blocks))
     fig, ax = plt.subplots(figsize=(9, 9))
     for component, (w, h, x, y) in enumerate(blocks):
         label = f'{w}x{h}, ({x},{y})'
         if rotation is not None:
             label += f', R={1 if rotation[component] else 0}'
-        ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=3, alpha=0.8))
+        ax.add_patch(Rectangle((x, y), w, h, facecolor=cmap(component), edgecolor='k', label=label, lw=2, alpha=0.8))
     ax.set_ylim(0, height)
     ax.set_xlim(0, width)
     ax.set_xlabel('width', fontsize=15)
     ax.set_ylabel('length', fontsize=15)
-    # ax.grid(True)
     ax.legend()
     ax.set_title(f'Instance {i}, size (WxH): {width}x{height}', fontsize=22)
     if not show_axis:
@@ -30,16 +29,16 @@ def plot_board(width, height, blocks, args, i, rotation, show_plot=True, show_ax
     if show_plot:
         plt.show(block=False)
         plt.pause(1)
-        plt.close(fig)
+    plt.close(fig)
 
 
 def plot_timings(timings, args):
+    np.save(f'timings/{args.technology}{"-rot" if args.rotation else ""}-timings', timings)
     fig, ax = plt.subplots(1, 1)
     ax.bar(range(len(timings)), timings)
     ax.set_title('Execution time for each instance')
     ax.set_xlabel('Instance')
     ax.set_ylabel('Time (s)')
-    plt.savefig(f'{args.technology}/out/timings.png')
     plt.show()
 
 
@@ -50,13 +49,16 @@ if __name__ == "__main__":
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
     parser.add_argument('-t', '--timeout', type=int, help='Timeout (ms)', default=300000)
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
-    parser.add_argument('-a', '--area', action="store_true", help="orders circuits by area")
+    parser.add_argument('-a', '--area', action="store_true", help="orders circuits by area", default=True)
     parser.add_argument('-r', '--rotation', action="store_true", help="enables circuits rotation")
 
     # technology-specific arguments
     parser.add_argument('--solver', type=str, help='CP solver (default: chuffed)', default='chuffed')
-    parser.add_argument('--heu', type=int, help='CP search heuristic (default: impact, min)', default=3)
-    parser.add_argument('--restart', type=int, help='CP restart strategy (default: luby)', default=3)
+    parser.add_argument('--heu', type=int, help='CP search heuristic (default: input_order, min)', default=0)
+    parser.add_argument('--restart', type=int, help='CP restart strategy (default: luby)', default=1)
+
+    parser.add_argument('--smt-model', type=str, help='SMT model to use (default: base)', default='base')
+
     args = parser.parse_args()
     args.technology = args.technology.upper()
     params = {'rotation': args.rotation}
@@ -64,15 +66,18 @@ if __name__ == "__main__":
         solver = solve_CP
         if args.solver not in ('gecode', 'chuffed'):
             raise ValueError(f'wrong solver {args.solver}; supported ones are gecode and chuffed')
-        if args.heu not in (1, 2, 3):
-            raise ValueError(f'wrong search heuristic {args.heu}; supported ones are gecode and chuffed')
-        if args.restart not in (1, 2, 3):
-            raise ValueError(f'wrong solver {args.solver}; supported ones are gecode and chuffed')
+        if args.heu not in (0, 1, 2):
+            raise ValueError(f'wrong search heuristic {args.heu}; supported ones are (0, 1, 2)')
+        if args.restart not in (0, 1, 2):
+            raise ValueError(f'wrong restart {args.restart}; supported ones are (0, 1, 2)')
         params.update({'solver': args.solver, 'search_heuristic': args.heu, 'restart_strategy': args.restart})
     elif args.technology == 'SAT':
         solver = solve_SAT
     elif args.technology == 'SMT':
         solver = solve_SMT
+        if args.smt_model not in ('base', 'array'):
+            raise ValueError(f'wrong smt model {args.smt_model}; supported ones are "base", "array"')
+        params.update({'kind': args.smt_model})
     else:
         raise ValueError('Wrong technology, either CP or SMT')
 
@@ -121,4 +126,6 @@ if __name__ == "__main__":
             res = [(xi, yi, xhati, yhati)
                    for xi, yi, xhati, yhati in zip(instance['x'], instance['y'], instance['xhat'], instance['yhat'])]
             plot_board(instance['w'], instance['l'], res, args, i, instance['rotation'])
+        else:
+            timings.append(500)
     plot_timings(timings, args)
