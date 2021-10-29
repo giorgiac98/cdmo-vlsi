@@ -34,7 +34,7 @@ Command line arguments:
 | `-e END, --end END`                              | Last instance to solve (default: 40)                                         |
 | `-t TIMEOUT, --timeout TIMEOUT`                  | Sets the timeout (ms, default: 300000)                                       |
 | `-v, --verbose`                                  | Enables verbose output (default: false)                                      |
-| `-a, --area`                                     | Sorts circuits by area before feeding them to the solver (default: true)     |
+| `-a, --no-area`                                  | Disables sorting circuits by area before feeding them to the solver          |
 | `-r, --rotation`                                 | Enables circuits rotation (default: false)                                   |
 | `--solver SOLVER`                                | (CP ONLY) CP solver to use (gecode/chuffed, default: chuffed)                |
 | `--heu HEU`                                      | (CP ONLY) CP search heuristic (0/1/2, default: 0)                            |
