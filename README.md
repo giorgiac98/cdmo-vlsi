@@ -22,7 +22,6 @@ All the solvers are executed by launching the `main.py` file and supplying the r
 python main.py technology [-h] [-s START] [-e END] [-t TIMEOUT] [-v] [-a] [-r]
                [--solver SOLVER] [--heu HEU] [--restart RESTART]
                [--smt-model SMT_MODEL]
-        
 ```
 
 Command line arguments:
