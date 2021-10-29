@@ -9,6 +9,7 @@ The following packages are required:
 - z3-solver
 - matplotlib
 - numpy
+
 You can install them on your own, or use the provided `requirements.txt` file to install them by running
 ```
 $ pip install -r requirements.txt
