@@ -16,7 +16,7 @@ array [circuits] of 1..maxl: y;
 array [circuits] of var 0..w-min(x): xhat;
 array [circuits] of var 0..maxl-min(y): yhat;
 
-/*
+
 array [circuits] of var xRange: xsym;
 array [circuits] of var yRange: ysym;
 constraint forall (i in circuits) (xsym[i] = w - x[i] - xhat[i] /\ ysym[i] = l - y[i] - yhat[i]);
@@ -43,7 +43,7 @@ constraint forall (j in yRange, k in xRange, i in circuits)
 constraint lex_lesseq(array1d(board), array1d(boardXsym));
 constraint lex_lesseq(array1d(board), array1d(boardYsym));
 constraint lex_lesseq(array1d(board), array1d(boardXYsym));
-*/
+
 
 /*
 array [circuits] of var 1..w*maxl: origins;
@@ -104,29 +104,27 @@ int: restart_strategy;
 
 ann: search_ann_xhat =
 if search_heuristic == 1 then
-  int_search(xhat, smallest, indomain_min)
-elseif search_heuristic == 2 then
   int_search(xhat, dom_w_deg, indomain_min)
-else
+elseif search_heuristic == 2 then
   int_search(xhat, impact, indomain_min)
+else
+  int_search(xhat, input_order, indomain_min)
 endif;
 
 ann: search_ann_yhat =
 if search_heuristic == 1 then
-  int_search(yhat, first_fail, indomain_min)
-elseif search_heuristic == 2 then
   int_search(yhat, dom_w_deg, indomain_min)
-else
+elseif search_heuristic == 2 then
   int_search(yhat, impact, indomain_min)
+else
+  int_search(yhat, input_order, indomain_min)
 endif;
 
 ann: restart_ann =
 if restart_strategy == 1 then
-  restart_constant(150)
-elseif restart_strategy == 2 then
-  restart_geometric(2,50)
-elseif restart_strategy == 3 then
   restart_luby(150)
+elseif restart_strategy == 2 then
+  restart_geometric(2, 50)
 else
   restart_none
 endif;

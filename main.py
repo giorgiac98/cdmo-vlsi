@@ -8,7 +8,7 @@ from SAT.src.launch import solve_SAT
 from SMT.src.launch import solve_SMT
 
 
-def plot_board(width, height, blocks, args, i, rotation, show_plot=False, show_axis=False):
+def plot_board(width, height, blocks, args, i, rotation, show_plot=True, show_axis=False):
     cmap = plt.cm.get_cmap('nipy_spectral', len(blocks))
     fig, ax = plt.subplots(figsize=(9, 9))
     for component, (w, h, x, y) in enumerate(blocks):
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     parser.add_argument('--sat-search', action="store_true", help="enables custom z3 sat search")
 
     parser.add_argument('--smt-model', type=str, help='SMT model to use (default: base)', default='base')
-    parser.add_argument('-d', '--dual', dest="dual", action="store_true", help="add dual model", default=True)
+    parser.add_argument('-d', '--dual', dest="dual", action="store_true", help="add dual model", default=False)
 
     args = parser.parse_args()
     args.technology = args.technology.upper()
@@ -73,7 +73,8 @@ if __name__ == "__main__":
             raise ValueError(f'wrong search heuristic {args.heu}; supported ones are (0, 1, 2)')
         if args.restart not in (0, 1, 2):
             raise ValueError(f'wrong restart {args.restart}; supported ones are (0, 1, 2)')
-        params.update({'solver': args.solver, 'search_heuristic': args.heu, 'restart_strategy': args.restart})
+        params.update({'solver': args.solver, 'search_heuristic': args.heu, 'restart_strategy': args.restart,
+                       'dual': args.dual})
     elif args.technology == 'SAT':
         solver = solve_SAT
         params.update({'custom_search': args.sat_search})

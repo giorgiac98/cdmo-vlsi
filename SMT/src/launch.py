@@ -27,12 +27,15 @@ def solve_SMT(instance, dual, rotation, kind='base', timeout=300000):
         instance['solved'] = True
         instance['l'] = model[vs['l']].as_long()
         if kind == 'base':
-            instance['x'] = [model[vs[f'x_{i}']].as_long() for i in range(instance['n'])]
-            instance['y'] = [model[vs[f'y_{i}']].as_long() for i in range(instance['n'])]
             instance['xhat'] = [model[vs[f'xhat_{i}']].as_long() for i in range(instance['n'])]
             instance['yhat'] = [model[vs[f'yhat_{i}']].as_long() for i in range(instance['n'])]
             if rotation:
+                instance['x'] = [model[vs[f'x_{i}']].as_long() for i in range(instance['n'])]
+                instance['y'] = [model[vs[f'y_{i}']].as_long() for i in range(instance['n'])]
                 instance['rotation'] = [model[vs[f'rotation_{i}']] for i in range(instance['n'])]
+            else:
+                instance['x'] = instance['inputx']
+                instance['y'] = instance['inputy']
         else:
             instance['x'] = [model.eval(vs['X'][i]).as_long() for i in range(instance['n'])]
             instance['y'] = [model.eval(vs['Y'][i]).as_long() for i in range(instance['n'])]
@@ -46,4 +49,5 @@ def solve_SMT(instance, dual, rotation, kind='base', timeout=300000):
     else:
         print('TIMEOUT')
         instance['solved'] = False
+        instance['time'] = 300
     return instance
