@@ -1,6 +1,18 @@
 from z3 import *
 
 
+def lex_lesseq(x, y):
+    # given arrays x and y, returns constraint imposing lex<= order between a and b
+    # X1 ≤ Y1 ∧ (X1 = Y1 -> X2 ≤ Y2) ∧ (X1 = Y1 ∧ X2 = Y2 ... ∧ Xk-1 = Yk-1 -> Xk ≤ Yk)
+    # note that in SAT ≤ is encoded as ->
+    # more elegant but maybe less efficient:
+    # And([Implies(And([x[i] == y[i] for i in range(k)]), Implies(x[k], y[k])) for k in range(len(x))])
+
+    return And([Implies(x[0], y[0])] +
+               [Implies(And([x[i] == y[i] for i in range(k)]), Implies(x[k], y[k]))
+                for k in range(1, len(x))])
+
+
 def lex(x, y):
     # given arrays x and y, returns constraint imposing lex<= order between a and b
     # X1 ≤ Y1 ∧
@@ -18,17 +30,19 @@ def flatten(matrix):
     return [cell for row in matrix for cell in row]
 
 
-def base_model(instance, rotation):
+def base_model(instance, dual, rotation):
     vs = {}
     # define main problem variables and constraints
     w, l = Ints('width length')
     circuits = list(range(instance['n']))
-    # board for dual model
-    #board = [[Int(f'B_{c}_{r}') for r in range(instance["w"])] for c in range(instance['maxl'])]
     vs['w'], vs['l'] = w, l
-    #vs['board'] = board
     # basic problem constraints
     constraints = [vs['w'] == instance["w"], vs['l'] >= instance['minl'], vs['l'] <= instance['maxl']]
+
+    # board for dual model
+    if dual:
+        board = [[[Bool(f'B_{i}_{j}_{k}') for k in circuits] for j in range(instance['w'])] for i in range(instance['maxl'])]
+        vs['B'] = board
 
     for i in circuits:
         x_i, y_i = Ints(f'x_{i} y_{i}')
@@ -58,9 +72,36 @@ def base_model(instance, rotation):
         constraints.append(area_i == (x_i * y_i))
 
         # channeling constraints
-        #constraints += [(board[c][r] == i) == (And(vs[f'xhat_{i}'] <= r, vs[f'xhat_{i}'] + vs[f'x_{i}'] > r,
-        #                                           vs[f'yhat_{i}'] <= c, vs[f'yhat_{i}'] + vs[f'y_{i}'] > c))
-        #                for r in range(instance["w"]) for c in range(instance['maxl'])]
+        if dual:
+            xsym_i, ysym_i = Ints(f'xsym_{i} ysym_{i}')
+            vs[f'xsym_{i}'], vs[f'ysym_{i}'] = xsym_i, ysym_i
+
+            constraints.append(And(vs[f'xsym_{i}'] == vs['w'] - vs[f'x_{i}'] - vs[f'xhat_{i}'],
+                                    vs[f'ysym_{i}'] == vs['l'] - vs[f'y_{i}'] - vs[f'yhat_{i}']))
+
+            constraints += [(board[c][r][i]) == (And(vs[f'xhat_{i}'] <= r, vs[f'xhat_{i}'] + vs[f'x_{i}'] > r,
+                                                       vs[f'yhat_{i}'] <= c, vs[f'yhat_{i}'] + vs[f'y_{i}'] > c))
+                            for r in range(instance["w"]) for c in range(instance['maxl'])]
+
+            constraints.append(lex_lesseq(flatten(board[:][:][i]),
+                                    [(And(vs[f'xsym_{i}'] <= r, vs[f'xsym_{i}'] + vs[f'x_{i}'] > r,
+                                            vs[f'yhat_{i}'] <= c, vs[f'yhat_{i}'] + vs[f'y_{i}'] > c))
+                            for r in range(instance["w"]) for c in range(instance['maxl'])]))
+            constraints.append(lex_lesseq(flatten(board[:][:][i]),
+                                    [(And(vs[f'xhat_{i}'] <= r, vs[f'xhat_{i}'] + vs[f'x_{i}'] > r,
+                                            vs[f'ysym_{i}'] <= c, vs[f'ysym_{i}'] + vs[f'y_{i}'] > c))
+                            for r in range(instance["w"]) for c in range(instance['maxl'])]))
+            constraints.append(lex_lesseq(flatten(board[:][:][i]),
+                                    [(And(vs[f'xsym_{i}'] <= r, vs[f'xsym_{i}'] + vs[f'x_{i}'] > r,
+                                            vs[f'ysym_{i}'] <= c, vs[f'ysym_{i}'] + vs[f'y_{i}'] > c))
+                            for r in range(instance["w"]) for c in range(instance['maxl'])]))
+
+            #constraints.append(lex(flatten(board),
+            #                       [board[j][i] for i in range(instance['w']) for j in range(instance['maxl'] - 1, -1, -1)]))
+            #constraints.append(lex(flatten(board),
+            #                       [board[j][i] for i in range(instance['w'] - 1, -1, -1) for j in range(instance['maxl'])]))
+            #constraints.append(lex(flatten(board),
+            #                       [board[j][i] for i in range(instance['w'] - 1, -1, -1) for j in range(instance['maxl'] - 1, -1, -1)]))
 
         # implied constraints: for each component i, # of cells of the board with value i must be equal to area_i
         #constraints.append(Sum([If(board[c][r] == i, 1, 0)
@@ -74,10 +115,6 @@ def base_model(instance, rotation):
     for row in range(instance['maxl']):
         constraints.append(Sum([If(And(vs[f'yhat_{i}'] < row, row <= vs[f'yhat_{i}'] + vs[f'y_{i}']), vs[f'x_{i}'], 0)
                                 for i in circuits]) <= vs['w'])
-
-    # board constraints
-    #constraints += [And(board[c][r] >= 0, board[c][r] <= instance['n'])
-    #                for r in range(instance["w"]) for c in range(instance['maxl'])]
 
     # no overlap constraints
     constraints += [
@@ -108,12 +145,5 @@ def base_model(instance, rotation):
                                 And(vs[f'yhat_{i}'] <= vs[f'yhat_{k}'], vs[f'yhat_{i}'] == vs[f'yhat_{j}']),
                                 And(vs[f'yhat_{k}'] <= vs[f'yhat_{i}'], vs[f'yhat_{i}'] == vs[f'yhat_{j}'])))
                     for i in circuits for j in circuits for k in circuits if i < j and j < k]
-
-    #constraints.append(lex(flatten(board),
-    #                       [board[j][i] for i in range(instance['w']) for j in range(instance['maxl'] - 1, -1, -1)]))
-    #constraints.append(lex(flatten(board),
-    #                       [board[j][i] for i in range(instance['w'] - 1, -1, -1) for j in range(instance['maxl'])]))
-    #constraints.append(lex(flatten(board),
-    #                       [board[j][i] for i in range(instance['w'] - 1, -1, -1) for j in range(instance['maxl'] - 1, -1, -1)]))
 
     return constraints, vs

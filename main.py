@@ -60,6 +60,7 @@ if __name__ == "__main__":
     parser.add_argument('--sat-search', action="store_true", help="enables custom z3 sat search")
 
     parser.add_argument('--smt-model', type=str, help='SMT model to use (default: base)', default='base')
+    parser.add_argument('-d', '--dual', dest="dual", action="store_true", help="add dual model", default=True)
 
     args = parser.parse_args()
     args.technology = args.technology.upper()
@@ -80,7 +81,7 @@ if __name__ == "__main__":
         solver = solve_SMT
         if args.smt_model not in ('base', 'array'):
             raise ValueError(f'wrong smt model {args.smt_model}; supported ones are "base", "array"')
-        params.update({'kind': args.smt_model})
+        params.update({'dual': args.dual, 'kind': args.smt_model})
     else:
         raise ValueError('Wrong technology, either CP or SMT')
 
