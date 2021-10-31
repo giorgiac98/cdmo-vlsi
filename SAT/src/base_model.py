@@ -5,12 +5,10 @@ import numpy as np
 
 def lex_lesseq(x, y):
     # given arrays x and y, returns constraint imposing lex<= order between a and b
-    # X1 ≤ Y1 ∧
-    # (X1 = Y1 -> X2 ≤ Y2) ∧
-    # (X1 = Y1 ∧ X2 = Y2 -> X3 ≤ Y3) ...
-    # (X1 = Y1 ∧ X2 = Y2 ... ∧ Xk-1 = Yk-1 -> Xk ≤ Yk)
+    # X1 ≤ Y1 ∧ (X1 = Y1 -> X2 ≤ Y2) ∧ (X1 = Y1 ∧ X2 = Y2 ... ∧ Xk-1 = Yk-1 -> Xk ≤ Yk)
+    # note that in SAT ≤ is encoded as ->
     # more elegant but maybe less efficient:
-    # And([Implies(And([x[i] == y[i] for i in range(k)]), x[k] <= y[k]) for k in range(len(x))])
+    # And([Implies(And([x[i] == y[i] for i in range(k)]), Implies(x[k], y[k])) for k in range(len(x))])
 
     return And([Implies(x[0], y[0])] +
                [Implies(And([x[i] == y[i] for i in range(k)]), Implies(x[k], y[k]))

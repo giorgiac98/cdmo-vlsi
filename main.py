@@ -33,7 +33,7 @@ def plot_board(width, height, blocks, args, i, rotation, show_plot=False, show_a
 
 
 def plot_timings(timings, args):
-    np.save(f'timings/{args.technology}{"-rot" if args.rotation else ""}-timings', timings)
+    np.save(f'timings/{args.technology}{"-a" if args.area else ""}{"-rot" if args.rotation else ""}-timings', timings)
     fig, ax = plt.subplots(1, 1)
     ax.bar(range(len(timings)), timings)
     ax.set_title('Execution time for each instance')
@@ -44,18 +44,20 @@ def plot_timings(timings, args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument('technology', type=str, help='The technology to use (CP or SMT)')
+    parser.add_argument('technology', type=str, help='The technology to use (CP, SAT or SMT)')
     parser.add_argument('-s', '--start', type=int, help='First instance to solve', default=1)
     parser.add_argument('-e', '--end', type=int, help='Last instance to solve', default=40)
     parser.add_argument('-t', '--timeout', type=int, help='Timeout (ms)', default=300000)
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose')
-    parser.add_argument('-a', '--area', action="store_true", help="orders circuits by area", default=True)
+    parser.add_argument('-a', '--no-area', dest="area", action="store_false", help="do not order circuits by area", default=True)
     parser.add_argument('-r', '--rotation', action="store_true", help="enables circuits rotation")
 
     # technology-specific arguments
     parser.add_argument('--solver', type=str, help='CP solver (default: chuffed)', default='chuffed')
     parser.add_argument('--heu', type=int, help='CP search heuristic (default: input_order, min)', default=0)
     parser.add_argument('--restart', type=int, help='CP restart strategy (default: luby)', default=1)
+
+    parser.add_argument('--sat-search', action="store_true", help="enables custom z3 sat search")
 
     parser.add_argument('--smt-model', type=str, help='SMT model to use (default: base)', default='base')
 
@@ -73,6 +75,7 @@ if __name__ == "__main__":
         params.update({'solver': args.solver, 'search_heuristic': args.heu, 'restart_strategy': args.restart})
     elif args.technology == 'SAT':
         solver = solve_SAT
+        params.update({'custom_search': args.sat_search})
     elif args.technology == 'SMT':
         solver = solve_SMT
         if args.smt_model not in ('base', 'array'):
@@ -127,5 +130,5 @@ if __name__ == "__main__":
                    for xi, yi, xhati, yhati in zip(instance['x'], instance['y'], instance['xhat'], instance['yhat'])]
             plot_board(instance['w'], instance['l'], res, args, i, instance['rotation'])
         else:
-            timings.append(500)
+            timings.append(300)
     plot_timings(timings, args)
