@@ -112,25 +112,24 @@ def base_model(instance, dual, rotation):
     # symmetry breaking
     # rows and columns symmetry
     constraints += [Implies(And(vs[f'xhat_{i}'] == vs[f'xhat_{j}'], vs[f'x_{i}'] == vs[f'x_{j}']),
-                            If(vs[f'y_{i}'] <= vs[f'y_{j}'], vs[f'yhat_{j}'] <= vs[f'yhat_{i}'], vs[f'yhat_{i}'] <= vs[f'yhat_{j}']))
+                            vs[f'yhat_{i}'] <= vs[f'yhat_{j}'])
                     for i in circuits for j in circuits if i < j]
 
     constraints += [Implies(And(vs[f'yhat_{i}'] == vs[f'yhat_{j}'], vs[f'y_{i}'] == vs[f'y_{j}']),
-                            If(vs[f'x_{i}'] <= vs[f'x_{j}'], vs[f'xhat_{j}'] <= vs[f'xhat_{i}'], vs[f'xhat_{i}'] <= vs[f'xhat_{j}']))
+                            vs[f'xhat_{i}'] <= vs[f'xhat_{j}'])
                     for i in circuits for j in circuits if i < j]
     # three block symmetry
     constraints += [Implies(And(vs[f'xhat_{i}'] == vs[f'xhat_{j}'], vs[f'x_{i}'] == vs[f'x_{j}'],
                                 vs[f'yhat_{i}'] == vs[f'yhat_{k}'], vs[f'y_{i}'] + vs[f'y_{j}'] == vs[f'y_{k}']),
-                            If(vs[f'x_{i}'] <= vs[f'x_{k}'],
-                                And(vs[f'xhat_{i}'] <= vs[f'xhat_{k}'], vs[f'xhat_{i}'] == vs[f'xhat_{j}']),
-                                And(vs[f'xhat_{k}'] <= vs[f'xhat_{i}'], vs[f'xhat_{i}'] == vs[f'xhat_{j}'])))
+                            vs[f'xhat_{k}'] <= vs[f'xhat_{i}'])
                     for i in circuits for j in circuits for k in circuits if i < j and j < k]
 
     constraints += [Implies(And(vs[f'yhat_{i}'] == vs[f'yhat_{j}'], vs[f'y_{i}'] == vs[f'y_{j}'],
                                 vs[f'xhat_{i}'] == vs[f'xhat_{k}'], vs[f'x_{i}'] + vs[f'x_{j}'] == vs[f'x_{k}']),
-                            If(vs[f'y_{i}'] <= vs[f'y_{k}'],
-                                And(vs[f'yhat_{i}'] <= vs[f'yhat_{k}'], vs[f'yhat_{i}'] == vs[f'yhat_{j}']),
-                                And(vs[f'yhat_{k}'] <= vs[f'yhat_{i}'], vs[f'yhat_{i}'] == vs[f'yhat_{j}'])))
+                            vs[f'yhat_{k}'] <= vs[f'yhat_{i}'])
                     for i in circuits for j in circuits for k in circuits if i < j and j < k]
+
+    # force the biggest block to be always to the bottom left of the second biggest
+    constraints.append(And(vs['xhat_1'] <= vs['xhat_2'], vs['yhat_1'] <= vs['yhat_2']))
 
     return constraints, vs
