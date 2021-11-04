@@ -21,6 +21,7 @@ All the solvers are executed by launching the `main.py` file and supplying the r
 ```
 python main.py technology [-h] [-s START] [-e END] [-t TIMEOUT] [-v] [-a] [-r]
                [--solver SOLVER] [--heu HEU] [--restart RESTART]
+               [--sat-search]
                [--smt-model SMT_MODEL]
 ```
 
@@ -39,4 +40,5 @@ Command line arguments:
 | `--solver SOLVER`                                | (CP ONLY) CP solver to use (gecode/chuffed, default: chuffed)                |
 | `--heu HEU`                                      | (CP ONLY) CP search heuristic (0/1/2, default: 0)                            |
 | `--restart RESTART`                              | (CP ONLY) CP restart strategy (0/1/2, default: 1)                            |
+| `--sat-search`                                   | (SAT ONLY) Enables Z3 custom search (default: false)                         |
 | `--smt-model SMT_MODEL`                          | (SMT ONLY) SMT model to use (base/array, default: base)                      |

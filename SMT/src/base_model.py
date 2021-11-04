@@ -88,12 +88,12 @@ def base_model(instance, dual, rotation):
             vs[f'ysymproj_{r}'] = ysymproj_r
             constraints.append(ysymproj_r == (w == Sum([vs[f'x_{i}'] for i in circuits if vs[f'ysym_{i}'] == r])))
 
-        f = {c: vs[f'xproj_{c}'] for c in range(instance["w"])}
-        fsym = {c: vs[f'xsymproj_{c}'] for c in range(instance["w"])}
-        g = {r: vs[f'yproj_{r}'] for r in range(instance["maxl"])}
-        gsym = {r: vs[f'ysymproj_{r}'] for r in range(instance["maxl"])}
-        constraints += [lex_lesseq(list(f.values()), list(fsym.values())),
-                        lex_lesseq(list(g.values()), list(gsym.values()))]
+        xproj = [vs[f'xproj_{c}'] for c in range(instance["w"])]
+        xproj_sym = [vs[f'xsymproj_{c}'] for c in range(instance["w"])]
+        yproj = [vs[f'yproj_{r}'] for r in range(instance["maxl"])]
+        yproj_sym = [vs[f'ysymproj_{r}'] for r in range(instance["maxl"])]
+        constraints += [lex_lesseq(xproj, xproj_sym),
+                        lex_lesseq(yproj, yproj_sym)]
 
     # implied constraints: for each horizontal (and vertical) line, the sum of traversed sides is bounded
     for col in range(instance['w']):
