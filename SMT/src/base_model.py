@@ -63,35 +63,22 @@ def base_model(instance, dual, rotation):
         constraints.append(yhat_i < l)
         constraints.append(yhat_i + y_i <= l)
 
-        # channeling constraints
-        if dual:
-            xsym_i, ysym_i = Ints(f'xsym_{k} ysym_{k}')
-            vs[f'xsym_{k}'], vs[f'ysym_{k}'] = xsym_i, ysym_i
-
-            constraints.append(And(vs[f'xsym_{k}'] == (vs['w'] - vs[f'x_{k}'] - vs[f'xhat_{k}']),
-                                   vs[f'ysym_{k}'] == (vs['l'] - vs[f'y_{k}'] - vs[f'yhat_{k}'])))
-
     if dual:
         for c in range(instance["w"]):
             xproj_c = Bool(f'xproj_{c}')
             vs[f'xproj_{c}'] = xproj_c
-            constraints.append(xproj_c == (l == Sum([vs[f'y_{i}'] for i in circuits if vs[f'xhat_{i}'] == c])))
-            xsymproj_c = Bool(f'xsymproj_{c}')
-            vs[f'xsymproj_{c}'] = xsymproj_c
-            constraints.append(xsymproj_c == (l == Sum([vs[f'y_{i}'] for i in circuits if vs[f'xsym_{i}'] == c])))
+            constraints.append(xproj_c == (l == Sum([If(vs[f'xhat_{i}'] == c, vs[f'y_{i}'], 0) for i in circuits])))
 
         for r in range(instance["maxl"]):
             yproj_r = Bool(f'yproj_{r}')
             vs[f'yproj_{r}'] = yproj_r
-            constraints.append(yproj_r == (w == Sum([vs[f'x_{i}'] for i in circuits if vs[f'yhat_{i}'] == r])))
-            ysymproj_r = Bool(f'ysymproj_{r}')
-            vs[f'ysymproj_{r}'] = ysymproj_r
-            constraints.append(ysymproj_r == (w == Sum([vs[f'x_{i}'] for i in circuits if vs[f'ysym_{i}'] == r])))
+            constraints.append(yproj_r == (w == Sum([If(vs[f'yhat_{i}'] == r, vs[f'x_{i}'], 0) for i in circuits])))
+            # constraints.append(yproj_r == (w == Sum([vs[f'x_{i}'] for i in circuits if vs[f'yhat_{i}'] == r])))
 
         xproj = [vs[f'xproj_{c}'] for c in range(instance["w"])]
-        xproj_sym = [vs[f'xsymproj_{c}'] for c in range(instance["w"])]
+        xproj_sym = [vs['xproj_0']] + [vs[f'xproj_{c}'] for c in range(instance["w"] - 1, 0, -1)]
         yproj = [vs[f'yproj_{r}'] for r in range(instance["maxl"])]
-        yproj_sym = [vs[f'ysymproj_{r}'] for r in range(instance["maxl"])]
+        yproj_sym = [vs['yproj_0']] + [vs[f'yproj_{r}'] for r in range(instance["maxl"] - 1, 0, -1)]
         constraints += [lex_lesseq(xproj, xproj_sym),
                         lex_lesseq(yproj, yproj_sym)]
 
@@ -122,14 +109,14 @@ def base_model(instance, dual, rotation):
     constraints += [Implies(And(vs[f'xhat_{i}'] == vs[f'xhat_{j}'], vs[f'x_{i}'] == vs[f'x_{j}'],
                                 vs[f'yhat_{i}'] == vs[f'yhat_{k}'], vs[f'y_{i}'] + vs[f'y_{j}'] == vs[f'y_{k}']),
                             vs[f'xhat_{k}'] <= vs[f'xhat_{i}'])
-                    for i in circuits for j in circuits for k in circuits if i < j and j < k]
+                    for i in circuits for j in circuits for k in circuits if i < j < k]
 
     constraints += [Implies(And(vs[f'yhat_{i}'] == vs[f'yhat_{j}'], vs[f'y_{i}'] == vs[f'y_{j}'],
                                 vs[f'xhat_{i}'] == vs[f'xhat_{k}'], vs[f'x_{i}'] + vs[f'x_{j}'] == vs[f'x_{k}']),
                             vs[f'yhat_{k}'] <= vs[f'yhat_{i}'])
-                    for i in circuits for j in circuits for k in circuits if i < j and j < k]
+                    for i in circuits for j in circuits for k in circuits if i < j < k]
 
     # force the biggest block to be always to the bottom left of the second biggest
-    constraints.append(And(vs['xhat_1'] <= vs['xhat_2'], vs['yhat_1'] <= vs['yhat_2']))
+    constraints.append(And(vs['xhat_0'] <= vs['xhat_1'], vs['yhat_0'] <= vs['yhat_1']))
 
     return constraints, vs

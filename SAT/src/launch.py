@@ -7,8 +7,8 @@ def get_solver(custom_search):
     s = Solver()
     if custom_search:
         s.set("sat.local_search", True)
-        s.set("sat.local_search_threads", 4)
-        s.set("sat.threads", 4)
+        s.set("sat.local_search_threads", 1)
+        s.set("sat.threads", 3)
         s.set("sat.lookahead_simplify", True)
         s.set("sat.lookahead.use_learned", True)
     return s
@@ -25,7 +25,7 @@ def solve_SAT(instance, rotation, custom_search=False, timeout=300000):
         constraints, vs = base_model(instance, l, rotation)
         setup_time = time() - start_time
         elapsed_time += setup_time
-        sol.set(timeout=int(timeout - elapsed_time))
+        sol.set(timeout=timeout - int(elapsed_time * 1000))
         sol.add(constraints)
         status = str(sol.check())
         solve_time = time() - start_time + setup_time

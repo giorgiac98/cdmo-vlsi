@@ -1,3 +1,4 @@
+import json
 import os
 import numpy as np
 from argparse import ArgumentParser
@@ -8,9 +9,9 @@ from SAT.src.launch import solve_SAT
 from SMT.src.launch import solve_SMT
 
 
-def plot_board(width, height, blocks, args, i, rotation, show_plot=True, show_axis=False):
+def plot_board(width, height, blocks, args, i, rotation, show_plot=False, show_axis=False):
     cmap = plt.cm.get_cmap('nipy_spectral', len(blocks))
-    fig, ax = plt.subplots(figsize=(9, 9))
+    fig, ax = plt.subplots(figsize=(10, 10))
     for component, (w, h, x, y) in enumerate(blocks):
         label = f'{w}x{h}, ({x},{y})'
         if rotation is not None:
@@ -32,14 +33,23 @@ def plot_board(width, height, blocks, args, i, rotation, show_plot=True, show_ax
     plt.close(fig)
 
 
-def plot_timings(timings, args):
-    np.save(f'timings/{args.technology}{"-a" if args.area else ""}{"-rot" if args.rotation else ""}-timings', timings)
-    fig, ax = plt.subplots(1, 1)
-    ax.bar(range(len(timings)), timings)
-    ax.set_title('Execution time for each instance')
-    ax.set_xlabel('Instance')
-    ax.set_ylabel('Time (s)')
-    plt.show()
+def get_timings(args):
+    if not os.path.exists('timings'):
+        os.mkdir('timings')
+    name = f'timings/{args.technology}{"-a" if args.area else ""}' \
+           f'{"-dual" if args.dual else ""}' \
+           f'{"-rot" if args.rotation else ""}'
+    if args.technology == 'CP':
+        name += f'-heu{args.heu}-restart{args.restart}'
+    elif args.technology == 'SAT':
+        name += f'{"-search" if args.sat_search else ""}'
+    name += '.json'
+    if os.path.isfile(name):  # z3 I hate your timeout bug so much
+        with open(name) as f:
+            data = {int(k): v for k, v in json.load(f).items()}
+    else:
+        data = {}
+    return data, name
 
 
 if __name__ == "__main__":
@@ -84,13 +94,15 @@ if __name__ == "__main__":
             raise ValueError(f'wrong smt model {args.smt_model}; supported ones are "base", "array"')
         params.update({'dual': args.dual, 'kind': args.smt_model})
     else:
-        raise ValueError('Wrong technology, either CP or SMT')
+        raise ValueError('Wrong technology, either CP, SAT or SMT')
 
     if not os.path.exists(f'{args.technology}/out'):
         os.mkdir(f'{args.technology}/out')
-
+    print('*' * 42)
     print(f'SOLVING INSTANCES {args.start} - {args.end} USING {args.technology} MODEL')
-    timings = []
+    print(f'PARAMETERS: {params}')
+    print('*' * 42)
+    timings, timings_filename = get_timings(args)
     for i in range(args.start, args.end + 1):
         print('=' * 20)
         print(f'INSTANCE {i}')
@@ -125,12 +137,14 @@ if __name__ == "__main__":
             if args.verbose:
                 print(out)
             print(f'TIME: {instance["fulltime"]}')
-            timings.append(instance['time'])
+            timings[i] = instance['time']
             with open(f'{args.technology}/out/out-{i}.txt', 'w') as f:
                 f.write(out)
             res = [(xi, yi, xhati, yhati)
                    for xi, yi, xhati, yhati in zip(instance['x'], instance['y'], instance['xhat'], instance['yhat'])]
             plot_board(instance['w'], instance['l'], res, args, i, instance['rotation'])
         else:
-            timings.append(300)
-    plot_timings(timings, args)
+            timings[i] = 300.
+
+        with open(timings_filename, 'w') as f:
+            json.dump(timings, f)
