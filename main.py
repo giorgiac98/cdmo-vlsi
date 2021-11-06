@@ -43,6 +43,8 @@ def get_timings(args):
         name += f'-heu{args.heu}-restart{args.restart}'
     elif args.technology == 'SAT':
         name += f'{"-search" if args.sat_search else ""}'
+    elif args.technology == 'SMT':
+        name += f'-{args.smt_model}'
     name += '.json'
     if os.path.isfile(name):  # z3 I hate your timeout bug so much
         with open(name) as f:
